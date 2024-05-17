@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
 from abc import ABC, abstractmethod
-from typing import override
+from overrides import override
 from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt

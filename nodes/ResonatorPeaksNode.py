@@ -1,4 +1,4 @@
-from typing import override
+from overrides import override
 from BaseNode import BaseNode
 
 

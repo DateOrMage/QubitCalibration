@@ -13,7 +13,7 @@ class BaseNode(ABC):
             data = pickle.load(file)
             return data
 
-
+    @staticmethod
     def entropy_H1_new(y, n_intervals=10):
         '''Энтропия H1'''
     
@@ -25,7 +25,7 @@ class BaseNode(ABC):
         entropy = -np.sum(p * np.log2(p))
         return entropy
 
-
+    @staticmethod
     def entropy_H2(y, n_intervals=10):
         '''Энтропия H2'''
         y_min, y_max = np.min(y), np.max(y)
@@ -43,6 +43,7 @@ class BaseNode(ABC):
         entropy = -np.sum(p * np.log2(p))
         return entropy
 
+    @staticmethod
     def entropy_H3(y):
         '''Энтропия H3'''
         # индексы сортированных значений, чтобы увидеть значения в порядке возрастания
@@ -67,5 +68,5 @@ class BaseNode(ABC):
 
 
     @abstractmethod
-    def run() -> np.ndarray:
+    def run():
         pass

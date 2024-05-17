@@ -1,13 +1,10 @@
 import numpy as np
-import pickle
-from abc import ABC, abstractmethod
-from typing import override
+from overrides import override
 from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
-from heapq import nlargest
 from scipy.special import comb
-from BaseNode import BaseNode
+from .BaseNode import BaseNode
 
 
 class RawQubitAmpCalNode(BaseNode):
@@ -20,7 +17,7 @@ class RawQubitAmpCalNode(BaseNode):
     @override
     def convert_data(self):
         '''Конвертация данных'''
-        data = self.get_data(self.filename)
+        data = self.get_data()
         voltage, SNRs = data[0], data[1]
         return voltage, SNRs
     
@@ -36,7 +33,7 @@ class RawQubitAmpCalNode(BaseNode):
     
     @staticmethod
     def bezier_curve(control_points, t):
-
+        '''Кривая Безье'''
         n = len(control_points) - 1
         curve_point = np.zeros(2)
         for i in range(n + 1):
@@ -52,7 +49,7 @@ class RawQubitAmpCalNode(BaseNode):
 
         A1, t, decay, A3 , teta, A0 = result.x
         opt_func = A1*np.exp(-t/decay)*np.cos(voltage*A3*t + teta)+A0
-        x_func = np.linspace(voltage.min(), voltage.max(), 1000)
+        x_func = np.linspace(voltage.min(), voltage.max(), 10000)
         y_func = A1*np.exp(-t/decay)*np.cos(x_func*A3*t + teta)+A0
         return x_func, y_func, opt_func
 
