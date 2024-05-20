@@ -57,6 +57,7 @@ class AccurateResonatorFreqCalNode(BaseNode):
 
     @override
     def run(self):
+        is_correct = True
         freq, SNRs = self.get_data()
         x_func, y_func, opt_func = self.optimize(freq, SNRs)
         control_points = np.column_stack((freq, SNRs))
@@ -77,7 +78,7 @@ class AccurateResonatorFreqCalNode(BaseNode):
         print(f'entropy H3 4 fine_resonator_freq_cal - {entropy_H3_4_fine_resonator_freq_cal}')
         mse = mean_squared_error(SNRs, opt_func)
         print(f"Mean Squared Error: {mse}")
-
+        
         plt.scatter(freq, SNRs, label='Data')
         plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Кривая Безье')
         plt.axvline(x=x_max, color='r', linestyle='--')
@@ -86,4 +87,4 @@ class AccurateResonatorFreqCalNode(BaseNode):
         plt.ylabel('SNR')
         plt.title(f'Probe freq. sweep, maximum at {round(x_max/10**9, 7)}V')
 
-        return x_max, plt
+        return x_max, plt, is_correct

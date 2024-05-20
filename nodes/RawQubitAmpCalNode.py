@@ -57,6 +57,7 @@ class RawQubitAmpCalNode(BaseNode):
 
     @override
     def run(self):
+        is_correct = True
         voltage, SNRs = self.convert_data()
 
         x_func, y_func, opt_func = self.optimize(voltage, SNRs)
@@ -85,4 +86,4 @@ class RawQubitAmpCalNode(BaseNode):
         plt.title(f'Drive amp. sweep, maximum at {round(x_max, 6)}V')
         
 
-        return x_max, plt
+        return x_max, plt, is_correct

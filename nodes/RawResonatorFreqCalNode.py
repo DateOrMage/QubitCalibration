@@ -19,9 +19,38 @@ class RawResonatorFreqCalNode(BaseNode):
     
     @override
     def convert_data(self):
-        pass
+        '''Конвертация данных'''
+        data = self.get_data()
+        freq, SNRs = data[0], data[1]
+        return freq, SNRs
+
+    @staticmethod
+    def bezier_curve(control_points, t):
+        n = len(control_points) - 1
+        curve_point = np.zeros(2)
+        for i in range(n + 1):
+            curve_point += control_points[i] * comb(n, i) * (1 - t)**(n - i) * t**i
+        return curve_point
     
-    
+
     @override
-    def run():
-        pass
+    def run(self):
+        is_correct = True
+        freq, SNRs = self.convert_data()
+        control_points = np.column_stack((freq, SNRs))
+        t = np.linspace(0, 1, 1000)
+        curve_points = np.array([self.bezier_curve(control_points, ti) for ti in t])
+        max_index = np.argmax(curve_points[:, 1])
+        x_max = curve_points[max_index, 0]
+        max_x_value = round(x_max / 1000000000, 6)
+        plt.figure(figsize=(10, 5))
+        plt.plot(freq, SNRs, c='b', marker='o', label='Исходные точки')
+        plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Аппроксимация Безье')
+        plt.axvline(x=x_max, color='r', linestyle='--', label=f'Max frequency = {max_x_value}')
+        plt.xlabel('Frequency, GHz')
+        plt.ylabel('SNR')
+        plt.title(f'Probe freq sweep, maximum at {max_x_value} GHz')
+        plt.grid(True)
+        plt.legend() 
+
+        return max_x_value, plt, is_correct
