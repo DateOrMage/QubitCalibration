@@ -51,14 +51,14 @@ class NodesManager:
         self.node_names.extend(nodes)            
 
 
-    def remove_nodes(self, nodes) -> None:
+    def remove_nodes(self, index_str) -> None:
         '''Удаляем 1 или несколько узлов'''
-        for node in self.node_names:
+        index_list = [int(i) for i in index_str.split()]
+        for i in sorted(index_list, reverse=True):
             try:
-                if node[0] in nodes:
-                    self.node_names.remove(node)
-            except NodeNameError:
-                raise NodeNameError('Указанного узла нет в списке. ', node)
+                self.node_names.remove(self.node_names[i])
+            except IndexError:
+                raise IndexError('Узла с одним из указанных индексов не существует. ', i)
 
     def set_default_nodes(self):
         '''Установить узлы по умолчанию'''
