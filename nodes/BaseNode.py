@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib as plt
 import pickle
 from abc import ABC, abstractmethod
 
@@ -8,26 +9,21 @@ class BaseNode(ABC):
         self.filename = filename
 
 
-    def get_data(self):
+    def get_data(self) -> np.ndarray:
+        """ Method gets data from path and return it
+            :return data: pickle, data from path
+        """
         with open(self.filename, 'rb') as file:
             data = pickle.load(file)
             return data
 
-    @staticmethod
-    def entropy_H1_new(y, n_intervals=10):
-        '''Энтропия H1'''
-    
-        intervals = np.linspace(y.min(), y.max(), n_intervals+1)
-        counts, _ = np.histogram(y, bins=intervals)
-        N = len(y)
-        p = counts / N
-        p = p[p != 0]
-        entropy = -np.sum(p * np.log2(p))
-        return entropy
 
     @staticmethod
-    def entropy_H2(y, n_intervals=10):
-        '''Энтропия H2'''
+    def entropy_H2(y, n_intervals=10) -> float:
+        """ Method calculates entropy for data
+            :return entropy: float, shows entropy for data
+        """
+        
         y_min, y_max = np.min(y), np.max(y)
         interval_size = (y_max - y_min) / n_intervals
         N = len(y)
@@ -43,30 +39,21 @@ class BaseNode(ABC):
         entropy = -np.sum(p * np.log2(p))
         return entropy
 
-    @staticmethod
-    def entropy_H3(y):
-        '''Энтропия H3'''
-        # индексы сортированных значений, чтобы увидеть значения в порядке возрастания
-        sorted_indices = np.argsort(y)
-        # подсчет числа случаев для каждой перестановки
-        N = len(y)
-        counts = np.zeros((N, N, N))
-        for i in range(N - 2):
-            perm = sorted_indices[i:i + 3]
-            if all(perm[j] < perm[j + 1] for j in range(2)):
-                counts[tuple(perm)] += 1
-        flattened_counts = counts.flatten() # в одномерный массив перевод
-        p = flattened_counts / (N - 2)
-        p = p[p != 0] #чтоб не было деления на ноль
-        entropy = -np.sum(p * np.log2(p))
-        return entropy
-
-
+    
     @abstractmethod
     def convert_data(self):
+        """ Method converts data to required type
+            :return freq: np.ndarray, frequency data 
+            :return SNRs: np.ndarray, SNRs data
+        """
         pass
 
 
     @abstractmethod
-    def run():
+    def run() -> None:
+        """ Method executing calculation on node
+            :return x_max: float, specified value of frequency
+            :return plt: plot, plot that shows optimized data
+            :return is_correct: bool, flag indicating whether the data is correct 
+        """
         pass

@@ -11,7 +11,6 @@ from BaseNode import BaseNode
 
 
 class RawResonatorFreqCalNode(BaseNode):
-    '''Грубая калибровка частоты резонатора'''
 
     def __init__(self, filename) -> None:
         super().__init__(filename)
@@ -19,7 +18,10 @@ class RawResonatorFreqCalNode(BaseNode):
     
     @override
     def convert_data(self):
-        '''Конвертация данных'''
+        """ Method converts data to required type
+            :return freq: np.ndarray, frequency data 
+            :return SNRs: np.ndarray, SNRs data
+        """
         data = self.get_data()
         freq, SNRs = data[0], data[1]
         return freq, SNRs
@@ -35,6 +37,11 @@ class RawResonatorFreqCalNode(BaseNode):
 
     @override
     def run(self):
+        """ Method executing calculation on node
+            :return x_max: float, specified value of frequency
+            :return plt: plot, plot that shows optimized data
+            :return is_correct: bool, flag indicating whether the data is correct 
+        """
         is_correct = True
         freq, SNRs = self.convert_data()
         control_points = np.column_stack((freq, SNRs))
@@ -43,6 +50,7 @@ class RawResonatorFreqCalNode(BaseNode):
         max_index = np.argmax(curve_points[:, 1])
         x_max = curve_points[max_index, 0]
         max_x_value = round(x_max / 1000000000, 6)
+    
         plt.figure(figsize=(10, 5))
         plt.plot(freq, SNRs, c='b', marker='o', label='Исходные точки')
         plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Аппроксимация Безье')

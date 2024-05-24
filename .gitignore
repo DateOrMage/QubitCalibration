@@ -1,5 +1,6 @@
 # *.csv
 /venv/
+/.venv/
 __pycache__/
 # /c_libraries/
 /.vscode/

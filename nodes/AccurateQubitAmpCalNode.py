@@ -3,16 +3,25 @@ from BaseNode import BaseNode
 
 
 class AccurateQubitAmpCalNode(BaseNode):
-    '''Точная калибровка амплитуды кубита'''
+
     def __init__(self, filename) -> None:
         super().__init__(filename)
 
     
     @override
     def convert_data(self):
+        """ Method converts data to required type
+            :return freq: np.ndarray, frequency data 
+            :return SNRs: np.ndarray, SNRs data
+        """
         pass
     
     
     @override
     def run(self):
+        """ Method executing calculation on node
+            :return x_max: float, specified value of frequency
+            :return plt: plot, plot that shows optimized data
+            :return is_correct: bool, flag indicating whether the data is correct 
+        """
         pass

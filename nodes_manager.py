@@ -100,13 +100,13 @@ class NodesManager:
         """ Method allows to move to the previous node
             :return: None
         """
-        print(f'Current node is {self.current_node}')
         if self.current_node:
             curr_index = self.node_names.index(self.current_node)
         else:
             curr_index = 0
         if self.node_names[curr_index-1]:
             self.current_node = self.node_names[curr_index-1]
+            print(f'Current node is {self.current_node}')
         else:
             raise NoPrevNodeError('There is no previous node.')
     

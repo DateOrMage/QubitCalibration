@@ -11,7 +11,6 @@ from BaseNode import BaseNode
 
 
 class IQCalNode(BaseNode):
-    '''Калибровка состояний 0, 1'''
 
     def __init__(self, filename) -> None:
         super().__init__(filename)
@@ -19,6 +18,10 @@ class IQCalNode(BaseNode):
     
     @override
     def convert_data(self):
+        """ Method converts data to required type
+            :return freq: np.ndarray, frequency data 
+            :return SNRs: np.ndarray, SNRs data
+        """
         data = self.get_data(self.filename)
         data_real_g, data_imag_g, data_real_e, data_imag_e = data[0], data[1], data[2], data[3]
         return data_real_g, data_imag_g, data_real_e, data_imag_e
@@ -26,4 +29,9 @@ class IQCalNode(BaseNode):
     
     @override
     def run():
+        """ Method executing calculation on node
+            :return x_max: float, specified value of frequency
+            :return plt: plot, plot that shows optimized data
+            :return is_correct: bool, flag indicating whether the data is correct 
+        """
         pass
