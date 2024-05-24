@@ -2,5 +2,5 @@
 /venv/
 __pycache__/
 # /c_libraries/
-approximation_funcs (2).ipynb
-entropy (3).ipynb
+/.vscode/
+/.mypy_cache/
