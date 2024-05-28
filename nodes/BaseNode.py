@@ -17,27 +17,24 @@ class BaseNode(ABC):
             data = pickle.load(file)
             return data
 
+    @staticmethod
+    def calculate_threshold(error_good, std_dev):
+        """ Method calculates required threshold
+            :return threshold: float, required threshold
+        """
+        threshold = error_good + std_dev
+        return threshold
 
     @staticmethod
-    def entropy_H2(y, n_intervals=10) -> float:
-        """ Method calculates entropy for data
-            :return entropy: float, shows entropy for data
-        """
-        
-        y_min, y_max = np.min(y), np.max(y)
-        interval_size = (y_max - y_min) / n_intervals
-        N = len(y)
-        p = []
-        for i in range(n_intervals):
-            interval_start = y_min + i * interval_size
-            interval_end = interval_start + interval_size
-            interval_count = np.sum((y >= interval_start) & (y < interval_end))
-            p_interval = interval_count / N
-            p.append(p_interval)
-        p = np.array(p)
-        p = p[p != 0]
-        entropy = -np.sum(p * np.log2(p))
-        return entropy
+    def error_based_on_range(data):
+        """ Method calculates the error threshold
+            :param data: np.ndarray
+            :return mean_error: float, required sigma
+        """ 
+        normalized_data = (data - min(data)) / (max(data) - min(data))
+        differences = normalized_data[1:] - normalized_data[:-1]
+        mean_error = sum(abs(differences)) / len(differences)
+        return mean_error
 
     
     @abstractmethod

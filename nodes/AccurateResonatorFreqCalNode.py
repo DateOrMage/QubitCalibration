@@ -21,6 +21,7 @@ class AccurateResonatorFreqCalNode(BaseNode):
         """
         data = self.get_data()
         freq, SNRs = data[0], data[1]
+    
         return freq, SNRs
 
 
@@ -43,9 +44,9 @@ class AccurateResonatorFreqCalNode(BaseNode):
         """ Method creates plot for data and optimized function
             :return plot: plt, plot that shows optimization result
         """
-
+        
         plt.scatter(freq, SNRs, label='Data')
-        plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Кривая Безье')
+        plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Bezier curve')
         plt.axvline(x=freq_max, color='r', linestyle='--')
         plt.legend()
         plt.xlabel('Frequency, GHz')
@@ -58,10 +59,12 @@ class AccurateResonatorFreqCalNode(BaseNode):
     @override
     def run(self):
         """ Method executing calculation on node
-            :return freq_max: float, specified value of frequency
+            :return result: str, str that represents specified value of frequency
             :return plot: plt, plot that shows optimized data
             :return is_correct: bool, flag indicating whether the data is correct 
         """
+        error_good = 0.12
+        std_dev = 0.01
         is_correct = True
         freq, SNRs = self.get_data()
         control_points = np.column_stack((freq, SNRs))
@@ -71,11 +74,16 @@ class AccurateResonatorFreqCalNode(BaseNode):
         max_index = np.argmax(curve_points[:, 1])
         freq_max = curve_points[max_index, 0]
 
-        entropy_H2_4_fine_resonator_freq_cal = self.entropy_H2(SNRs)
-        print(f'entropy H2 4 fine_resonator_freq_cal - {entropy_H2_4_fine_resonator_freq_cal}')
+        threshold_error = self.calculate_threshold(error_good, std_dev)
+
+        if threshold_error < self.error_based_on_range(SNRs):
+            is_correct = False
+    
         bezier_curve_mse = mean_squared_error(SNRs_linspace, curve_points[:, 1])
         print(f'mse - {bezier_curve_mse}')
     
         plot = self.create_plot(freq, SNRs, curve_points, freq_max)
 
-        return freq_max, plot, is_correct
+        result = f'{freq_max} Ghz'
+
+        return result, plot, is_correct

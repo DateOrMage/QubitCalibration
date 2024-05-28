@@ -1,9 +1,19 @@
 from importlib import import_module
+import logging
+from operator import itemgetter
 
 from NodeManagerErrors.NodeNameError import NodeNameError
 from NodeManagerErrors.NoNextNodeError import NoNextNodeError
 from NodeManagerErrors.NoPrevNodeError import NoPrevNodeError
 
+
+lgr = logging.getLogger('QuantsLogger')
+lgr.setLevel(logging.DEBUG)
+fh = logging.FileHandler('log.txt')
+fh.setLevel(logging.DEBUG)
+frmt = logging.Formatter('%(asctime)s,%(name)s,%(levelname)s,%(message)s')
+fh.setFormatter(frmt)
+lgr.addHandler(fh)
 
 class NodesManager:
     """ The NodesManager class is a Python class that manages a pipeline of nodes for running
@@ -49,8 +59,11 @@ class NodesManager:
         """
         for node_name in nodes:
             if node_name not in self.default_nodes:
+                lgr.error(f'Thrown NodeNameError cause of incorrect values: {node_name}')
                 raise NodeNameError(f'The list of nodes contains incorrect values: {node_name}')
-        self.node_names.extend(nodes)            
+                
+        self.node_names.extend(nodes)
+        lgr.info(f'Added nodes {nodes}')
 
 
     def remove_nodes(self, indexes_str) -> None:
@@ -62,7 +75,9 @@ class NodesManager:
         for i in sorted(index_list, reverse=True):
             try:
                 self.node_names.remove(self.node_names[i])
+                lgr.info(f'Removed nodes: {itemgetter(*index_list)(self.node_names)}')
             except IndexError:
+                lgr.error(f'Thrown IndexError cause node with the specified index does not exist - {i}')
                 raise IndexError(f'The node with the specified index does not exist - {i}')
 
 
@@ -71,6 +86,7 @@ class NodesManager:
             :return: None
         """
         self.add_nodes(self.default_nodes)
+        lgr.info(f'Nodes set to default')
 
 
     def get_current_node(self) -> str:
@@ -91,8 +107,10 @@ class NodesManager:
             curr_index = -1
         try:
             self.current_node = self.node_names[curr_index+1]
+            lgr.info(f'Moved forvard from {self.node_names[curr_index]} to {self.node_names[curr_index+1]}')
             print(f'Current node is {self.current_node}')
         except IndexError:
+            lgr.error(f'Thrown NoNextNodeError cause next node is not exists')
             raise NoNextNodeError('There is no next node.')
 
 
@@ -106,8 +124,10 @@ class NodesManager:
             curr_index = 0
         if self.node_names[curr_index-1]:
             self.current_node = self.node_names[curr_index-1]
+            lgr.info(f'Moved back from {self.node_names[curr_index]} to {self.node_names[curr_index-1]}')
             print(f'Current node is {self.current_node}')
         else:
+            lgr.error(f'Thrown NoPrevNodeError cause previous node is not exists')
             raise NoPrevNodeError('There is no previous node.')
     
 
@@ -123,6 +143,7 @@ class NodesManager:
             curr_index = 0
         if self.node_names[curr_index-n]:
             self.current_node = self.node_names[curr_index-n]
+            lgr.info(f'Moved backward {n} times. From {self.node_names[curr_index]} to {self.node_names[curr_index-n]}')
 
     def execute_node(self, data_path: str = '') -> None:
         """ Method Run calculations on the node and show the result
@@ -130,7 +151,8 @@ class NodesManager:
             :return: None
         """
         curr_node_instance = getattr(import_module(f'nodes.{self.current_node}'), self.current_node)(data_path)
-        x_max, plot, is_correct = curr_node_instance.run()
-        
+        result, plot, is_correct = curr_node_instance.run()
+        print(f'Result: {result}\nis_correct - {is_correct}')
         plot.show()
-        print(f'Result {x_max} Mhz\nis_correct - {is_correct}')
+        lgr.info(f'Executed node is {self.current_node}. Results: {result}, Data correct flag: {is_correct}')
+        

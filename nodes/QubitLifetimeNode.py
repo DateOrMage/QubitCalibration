@@ -28,7 +28,7 @@ class QubitLifetimeNode(BaseNode):
     @override
     def run():
         """ Method executing calculation on node
-            :return x_max: float, specified value of frequency
+            :return result: str, str that represents specified value of frequency
             :return plt: plot, plot that shows optimized data
             :return is_correct: bool, flag indicating whether the data is correct 
         """

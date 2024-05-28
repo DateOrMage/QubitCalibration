@@ -43,9 +43,9 @@ class RawQubitAmpCalNode(BaseNode):
         """ Method creates plot for data and optimized function
             :return plot: plt, plot that shows data optimization result
         """
-
+        
         plt.scatter(voltage, SNRs, label='Data')
-        plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Кривая Безье')
+        plt.plot(curve_points[:, 0], curve_points[:, 1], 'g-', label='Bezier curve')
         plt.axvline(x=v_max, color='r', linestyle='--')
         plt.legend()
         plt.xlabel('Voltage, V')
@@ -58,10 +58,12 @@ class RawQubitAmpCalNode(BaseNode):
     @override
     def run(self):
         """ Method executing calculation on node
-            :return v_max: float, specified value of voltage
+            :return result: str, str that represents specified value of voltage
             :return plot: plt, plot that shows optimized data
             :return is_correct: bool, flag indicating whether the data is correct 
         """
+        error_good = 0.1
+        std_dev = 0.01
         is_correct = True
         voltage, SNRs = self.convert_data()
 
@@ -70,20 +72,17 @@ class RawQubitAmpCalNode(BaseNode):
         SNRs_linspace = np.linspace(min(SNRs), max(SNRs), 10000)
         curve_points = np.array([self.bezier_curve(control_points, ti) for ti in t])
 
-        max_index = np.argmax(curve_points[:, 1])
-        v_max = curve_points[max_index, 0]
+        v_max_index = np.argmax(curve_points[:, 1])
+        v_max = curve_points[v_max_index, 0]
 
-
-        entropy_H2_4_fine_resonator_freq_cal = self.entropy_H2(SNRs)
-        print(f'entropy H2 4 fine_resonator_freq_cal - {entropy_H2_4_fine_resonator_freq_cal}')
-      
-
+        threshold_error = self.calculate_threshold(error_good, std_dev)
+        if threshold_error < self.error_based_on_range(SNRs):
+            is_correct = False
 
         bezier_curve_mse = mean_squared_error(SNRs_linspace, curve_points[:, 1])
         print(f'mse - {bezier_curve_mse}')
 
         plot = self.create_plot(voltage, SNRs, curve_points, v_max)
-        
-        
 
-        return v_max, plot, is_correct
+        result = f'{v_max} V'
+        return result, plot, is_correct
