@@ -86,7 +86,7 @@ class NodesManager:
             :return: None
         """
         self.add_nodes(self.default_nodes)
-        lgr.info(f'Nodes set to default')
+        lgr.info('Nodes set to default')
 
 
     def get_current_node(self) -> str:
@@ -110,7 +110,7 @@ class NodesManager:
             lgr.info(f'Moved forvard from {self.node_names[curr_index]} to {self.node_names[curr_index+1]}')
             print(f'Current node is {self.current_node}')
         except IndexError:
-            lgr.error(f'Thrown NoNextNodeError cause next node is not exists')
+            lgr.error('Thrown NoNextNodeError cause next node is not exists')
             raise NoNextNodeError('There is no next node.')
 
 

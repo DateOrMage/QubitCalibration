@@ -1,6 +1,5 @@
 import numpy as np
 from overrides import override
-from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from scipy.special import comb
