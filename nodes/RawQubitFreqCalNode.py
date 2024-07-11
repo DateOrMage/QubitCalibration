@@ -7,25 +7,17 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from heapq import nlargest
 from scipy.special import comb
+
+from libs.pulses_processing import *
+from libs.pi_pulse_cals_fw import *
 from .BaseNode import BaseNode
 
 
 class RawQubitFreqCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
+    def __init__(self) -> None:
+        super().__init__()
 
-    
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, frequency data 
-            :return SNRs: np.ndarray, SNRs data
-        """
-        data = self.get_data()
-        voltage, SNRs = data[0], data[1]
-        return voltage, SNRs
-    
 
     @staticmethod
     def bezier_curve(control_points, t):
@@ -60,7 +52,21 @@ class RawQubitFreqCalNode(BaseNode):
     
     
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, drive_f_sweep, start, stop, if_res = args
+    
+        I_g_drive, Q_g_drive = drive_frequency_sweep_ground (q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, [drive_f_sweep[0]])
+        I_e_drive, Q_e_drive = drive_frequency_sweep_excited(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, drive_f_sweep)
+
+        drive_freqs_data = SNR_pi_pulse_calibrations(I_g_drive, Q_g_drive, I_e_drive, Q_e_drive, start, stop, if_res=if_res)
+
+        return drive_f_sweep, drive_freqs_data
+
+
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents value of frequency
             :return plt: plot, plot that shows optimized data
@@ -69,7 +75,7 @@ class RawQubitFreqCalNode(BaseNode):
         error_good = 0.1
         std_dev = 0.01
         is_correct = True
-        freq, SNRs = self.convert_data()
+        freq, SNRs = data
         
         t = np.linspace(0, 1, 1000)
 

@@ -5,8 +5,8 @@ from .BaseNode import BaseNode
 
 class QubitSpectroscopyNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
+    def __init__(self) -> None:
+        super().__init__()
 
     
     @override

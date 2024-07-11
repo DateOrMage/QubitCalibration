@@ -1,30 +1,20 @@
 import numpy as np
-import pickle
-from abc import ABC, abstractmethod
 from overrides import override
-from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
-from heapq import nlargest
 from scipy.special import comb
+
+from libs.pi_pulse_cals_fw import *  # type: ignore
+from libs.pulses_processing import * # type: ignore
 from .BaseNode import BaseNode
 
 
 class RawResonatorFreqCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
+    def __init__(self) -> None:
+        super().__init__()
 
-    
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, frequency data 
-            :return SNRs: np.ndarray, SNRs data
-        """
-        data = self.get_data()
-        freq, SNRs = data[0], data[1]
-        return freq, SNRs
+
 
     @staticmethod
     def bezier_curve(control_points, t):
@@ -53,18 +43,30 @@ class RawResonatorFreqCalNode(BaseNode):
 
         return plt
     
+    @override
+    def run_measurements(self, *args):     
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep, start, stop, if_res = args
+
+        I_g_probe, Q_g_probe = probe_frequency_sweep_ground(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep)
+        I_e_probe, Q_e_probe = probe_frequency_sweep_excited(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep)
+
+        probe_freqs_data, signal_g, signal_e = SNR_pi_pulse_calibrations(I_g_probe, Q_g_probe, I_e_probe, Q_e_probe, start, stop, if_res=if_res, shift=True)
+        
+        return probe_f_sweep, probe_freqs_data
 
     @override
-    def run(self):
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of frequency
             :return plt: plot, plot that shows optimized data
             :return is_correct: bool, flag indicating whether the data is correct 
         """
+        
         error_good = 0.2
         std_dev = 0.01
         is_correct = True
-        freq, SNRs = self.convert_data()
+        freq, SNRs = data
 
         SNRs_linspace = np.linspace(min(SNRs), max(SNRs), 1000)
         control_points = np.column_stack((freq, SNRs))
@@ -85,3 +87,8 @@ class RawResonatorFreqCalNode(BaseNode):
         plot = self.create_plot(freq, SNRs, curve_points, freq_max)
         result = f'{freq_max_rounded} Ghz'
         return result, plot, is_correct
+    
+
+
+uzel = RawResonatorFreqCalNode()
+

@@ -4,24 +4,15 @@ from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
 import math
 
+from libs.pulses_processing import *
+from libs. calibration_curves import *
 from .BaseNode import BaseNode
 
 
 class IQCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
-
-
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, frequency data 
-            :return SNRs: np.ndarray, SNRs data
-        """
-        data = self.get_data()
-        data_real_g, data_imag_g, data_real_e, data_imag_e = data[0], data[1], data[2], data[3]
-        return data_real_g, data_imag_g, data_real_e, data_imag_e
+    def __init__(self) -> None:
+        super().__init__()
 
 
     @staticmethod
@@ -75,14 +66,29 @@ class IQCalNode(BaseNode):
 
 
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration = args
+    
+        I_cal_g, Q_cal_g = ground_state_1Q(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration)
+        I_cal_e, Q_cal_e = excited_state_1Q(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration)
+
+        
+        I_cal_g, Q_cal_g, I_cal_e, Q_cal_e = calcurves_centering(I_cal_g, Q_cal_g, I_cal_e, Q_cal_e)
+
+        return Q_cal_g, I_cal_g, Q_cal_e, I_cal_e
+
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of distance between centers of circles
             :return plt: plot, plot that shows optimized data
             :return is_correct: bool, flag indicating whether the data is correct 
         """
         min_distance = 120
-        data_real_g, data_imag_g, data_real_e, data_imag_e = self.convert_data()
+        data_real_g, data_imag_g, data_real_e, data_imag_e = data
         
         x0, y0, r0 = self.optimize_circle(data_real_e, data_imag_e)
         x1, y1, r1 = self.optimize_circle(data_real_g, data_imag_g)

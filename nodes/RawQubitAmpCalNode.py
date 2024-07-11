@@ -4,24 +4,16 @@ from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from scipy.special import comb
+
+from libs.pi_pulse_cals_fw import *
+from libs.pulses_processing import *
 from .BaseNode import BaseNode
 
 
 class RawQubitAmpCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
-
-    
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, frequency data 
-            :return SNRs: np.ndarray, SNRs data
-        """
-        data = self.get_data()
-        voltage, SNRs = data[0], data[1]
-        return voltage, SNRs
+    def __init__(self) -> None:
+        super().__init__()
 
     
     @staticmethod
@@ -56,7 +48,22 @@ class RawQubitAmpCalNode(BaseNode):
 
 
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, drive_amp_sweep, start, stop, if_res = args
+    
+        I_g_d_amp, Q_g_d_amp = drive_amplitude_sweep_ground (q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, [drive_amp_sweep[0]])
+        I_e_d_amp, Q_e_d_amp = drive_amplitude_sweep_excited(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, drive_amp_sweep)
+
+        drive_amps_data = SNR_pi_pulse_calibrations(I_g_d_amp, Q_g_d_amp, I_e_d_amp, Q_e_d_amp, start, stop, if_res=if_res)
+
+        return drive_amp_sweep, drive_amps_data
+
+                
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of voltage
             :return plot: plt, plot that shows optimized data
@@ -65,7 +72,7 @@ class RawQubitAmpCalNode(BaseNode):
         error_good = 0.1
         std_dev = 0.01
         is_correct = True
-        voltage, SNRs = self.convert_data()
+        voltage, SNRs = data
 
         control_points = np.column_stack((voltage, SNRs))
         t = np.linspace(0, 1, 10000)

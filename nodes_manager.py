@@ -66,19 +66,30 @@ class NodesManager:
         lgr.info(f'Added nodes {nodes}')
 
 
-    def remove_nodes(self, indexes_str) -> None:
-        """ Method removes nodes from pipeline
-            :param indexes_str: str, str of node indexes to remove
+    def clear_nodes(self):
+        """ Method clears all nodes
             :return: None
         """
-        index_list = [int(i) for i in indexes_str.split()]
-        for i in sorted(index_list, reverse=True):
-            try:
+        self.node_names = []
+        self.current_node = ''
+        print('Nodes Cleared')
+
+    def remove_nodes(self, *args) -> None:
+        """ Method removes nodes from pipeline
+            :param *args: tuple, int node indexes to remove
+            :return: None
+        """
+        index_list = list(args)
+        
+        try:
+            lgr.info(f'Removing nodes: {itemgetter(*index_list)(self.node_names)}')
+            for i in sorted(index_list, reverse=True):
                 self.node_names.remove(self.node_names[i])
-                lgr.info(f'Removed nodes: {itemgetter(*index_list)(self.node_names)}')
-            except IndexError:
-                lgr.error(f'Thrown IndexError cause node with the specified index does not exist - {i}')
-                raise IndexError(f'The node with the specified index does not exist - {i}')
+
+            
+        except IndexError:
+            lgr.error(f'Thrown IndexError cause node with the specified index does not exist - {i}')
+            raise IndexError(f'The node with the specified index does not exist - {i}')
 
 
     def set_default_nodes(self) -> None:
@@ -88,11 +99,20 @@ class NodesManager:
         self.add_nodes(self.default_nodes)
         lgr.info('Nodes set to default')
 
+    def get_node_names(self):
+        """ Method returns List of all pipeline nodes
+            :return self.node_names: List of nodes
+        """
+        print('List of nodes:')
+        for i in range(len(self.node_names)):
+            print(f'[{i}] {self.node_names[i]}')
+        return self.node_names
 
     def get_current_node(self) -> str:
         """ Method returns name of the current node
             :return: self.current_node: str, name of the current node
         """
+        print(f'Current node is {self.current_node}')
         return self.current_node
     
 
@@ -130,29 +150,52 @@ class NodesManager:
             lgr.error(f'Thrown NoPrevNodeError cause previous node is not exists')
             raise NoPrevNodeError('There is no previous node.')
     
+    def swap_nodes(self, index1, index2):
+        """ Method allows to swap nodes
+            :param index1: first index of node to swap
+            :param index2: second index of node to swap
+            :return: None
+        """
+        self.node_names[index1], self.node_names[index2] = self.node_names[index2], self.node_names[index1]
 
-    def return_to_n(self, n) -> None:
+    def go_to_n(self, n) -> None:
         """ Method allows to go back n nodes
             :param n:
             :return: None
         """
-        print(f'Current node is {self.current_node}')
         if self.current_node:
             curr_index = self.node_names.index(self.current_node)
         else:
             curr_index = 0
-        if self.node_names[curr_index-n]:
-            self.current_node = self.node_names[curr_index-n]
-            lgr.info(f'Moved backward {n} times. From {self.node_names[curr_index]} to {self.node_names[curr_index-n]}')
+        if self.node_names[n]:
+            self.current_node = self.node_names[n]
+            print(f'Current node is {self.current_node}')
+            lgr.info(f'Moved From {self.node_names[curr_index]} to {self.node_names[n]}')
+        else:
+            lgr.error(f'Thrown NoPrevNodeError cause previous node is not exists')
+            raise NoPrevNodeError('There is no previous node.')
+        
 
-    def execute_node(self, data_path: str = '') -> None:
+    def count_nodes(self):
+        """ Method returns 
+            :return self.node_names: List of nodes
+        """
+        return len(self.node_names)
+
+
+    def execute_node(self, *args) -> None:
         """ Method Run calculations on the node and show the result
             :param data_path: str, path to pkl file for the current node
             :return: None
         """
-        curr_node_instance = getattr(import_module(f'nodes.{self.current_node}'), self.current_node)(data_path)
-        result, plot, is_correct = curr_node_instance.run()
+        
+        curr_node_instance = getattr(import_module(f'nodes.{self.current_node}'), self.current_node)()
+        data = []
+        data = curr_node_instance.run_measurements(*args)
+        result, plot, is_correct = curr_node_instance.run(data)
         print(f'Result: {result}\nis_correct - {is_correct}')
         plot.show()
         lgr.info(f'Executed node is {self.current_node}. Results: {result}, Data correct flag: {is_correct}')
+
+        return self.current_node, result, is_correct
         

@@ -4,24 +4,16 @@ from abc import ABC, abstractmethod
 from overrides import override
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
+
+from libs.pulses_processing import *
+from libs. qubit_characterization import *
 from .BaseNode import BaseNode
 
 
 class RamseyQubitFreqCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
-
-    
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, time data 
-            :return SNRs: np.ndarray, probability data
-        """
-        data = self.get_data()
-        time, probability = data[0], data[1]
-        return time, probability
+    def __init__(self) -> None:
+        super().__init__()
 
 
     @staticmethod
@@ -56,7 +48,23 @@ class RamseyQubitFreqCalNode(BaseNode):
 
 
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, ramsey_length, ramsey_offset, I_cal_g, Q_cal_g, I_cal_e, Q_cal_e, start, stop, if_res = args
+
+        I_ramsey, Q_ramsey = Ramsey_1Q (q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, ramsey_length, ramsey_offset)
+
+        
+        z0, z1 = data_centering(I_cal_g, Q_cal_g, I_cal_e, Q_cal_e, start, stop, 'rotation')
+        p0, p1 = probabilities(z0, z1, I_ramsey, Q_ramsey, start, stop, 'rotation', if_res)
+
+        return ramsey_length, p1
+
+
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of frequency
             :return plt: plot, plot that shows optimized data
@@ -65,7 +73,7 @@ class RamseyQubitFreqCalNode(BaseNode):
         error_good = 0.01
         std_dev = 0.001
         is_correct = True
-        time, probability = self.convert_data()
+        time, probability = data
         popt, pcov = curve_fit(self.fit_cosine, time, probability)
         a, b, c, d = popt
         y_cosine = self.fit_cosine(time, a, b, c, d)
