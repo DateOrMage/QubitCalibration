@@ -2,24 +2,17 @@ from overrides import override
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+
+from libs.pulses_processing import *
+from libs. qubit_characterization import *
 from .BaseNode import BaseNode
 
 
 class QubitLifetimeNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
+    def __init__(self) -> None:
+        super().__init__()
 
-    
-    @override
-    def convert_data(self):
-        """ Method converts data to required type
-            :return freq: np.ndarray, frequency data 
-            :return SNRs: np.ndarray, SNRs data
-        """
-        data = self.get_data()
-        time, probability = data[0], data[1]
-        return time, probability
     
     @staticmethod
     def expa(x, a, b, c):
@@ -38,8 +31,23 @@ class QubitLifetimeNode(BaseNode):
         plt.tight_layout()
         return plt
     
+
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, decay_lengths, I_cal_g, Q_cal_g, I_cal_e, Q_cal_e, start, stop, if_res = args
+
+        I_decay, Q_decay = decay_1Q (q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, decay_lengths)
+
+        z0, z1 = data_centering(I_cal_g, Q_cal_g, I_cal_e, Q_cal_e, start, stop, 'rotation')
+        p0, p1 = probabilities(z0, z1, I_decay, Q_decay, start, stop, 'rotation', if_res)
+
+        return decay_lengths, p0, p1, 
+
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of frequency
             :return plt: plot, plot that shows optimized data
@@ -48,7 +56,7 @@ class QubitLifetimeNode(BaseNode):
         error_good = 0.6
         std_dev = 0.01
         is_correct = True
-        time, probability = self.convert_data()
+        time, _, probability = data
         a_guess = np.max(probability)
         b_guess = len(time) / (time[-1] - time[0])
         c_guess = np.min(probability)

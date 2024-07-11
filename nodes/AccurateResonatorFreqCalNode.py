@@ -4,13 +4,16 @@ from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from scipy.special import comb
+
+from libs.pi_pulse_cals_fw import * 
+from libs.pulses_processing import *
 from .BaseNode import BaseNode
 
 
 class AccurateResonatorFreqCalNode(BaseNode):
 
-    def __init__(self, filename) -> None:
-        super().__init__(filename)
+    def __init__(self) -> None:
+        super().__init__()
 
 
     @override
@@ -19,10 +22,7 @@ class AccurateResonatorFreqCalNode(BaseNode):
             :return freq: np.ndarray, frequency data 
             :return SNRs: np.ndarray, SNRs data
         """
-        data = self.get_data()
-        freq, SNRs = data[0], data[1]
-    
-        return freq, SNRs
+        pass
 
 
     @staticmethod
@@ -57,7 +57,20 @@ class AccurateResonatorFreqCalNode(BaseNode):
 
 
     @override
-    def run(self):
+    def run_measurements(self, *args):
+        
+        q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep, start, stop, if_res = args
+
+        I_g_probe, Q_g_probe = probe_frequency_sweep_ground(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep)
+        I_e_probe, Q_e_probe = probe_frequency_sweep_excited(q_num, qubits_params, mixer_cals, chip_name, hdawg, key, AVGS_POW, AVGS, probe_pulse_duration, probe_f_sweep)
+
+        probe_freqs_data, signal_g, signal_e = SNR_pi_pulse_calibrations(I_g_probe, Q_g_probe, I_e_probe, Q_e_probe, start, stop, if_res=if_res, shift=True)
+        
+        return probe_f_sweep, probe_freqs_data
+
+
+    @override
+    def run(self, data):
         """ Method executing calculation on node
             :return result: str, str that represents specified value of frequency
             :return plot: plt, plot that shows optimized data
@@ -66,7 +79,7 @@ class AccurateResonatorFreqCalNode(BaseNode):
         error_good = 0.12
         std_dev = 0.01
         is_correct = True
-        freq, SNRs = self.get_data()
+        freq, SNRs = data
         control_points = np.column_stack((freq, SNRs))
         t = np.linspace(0, 1, 1000)
         SNRs_linspace = np.linspace(min(SNRs), max(SNRs), 1000)
